@@ -14,7 +14,7 @@ namespace ConsoleApp1
         {
             AbsztraktÁllapot k = new Feladat2p4();
             Csúcs start = new Csúcs(k);
-            Console.WriteLine(start.ToString());
+            //Console.WriteLine(start.ToString());
             GráfKereső kereső = new BackTrack(start, 8, true);
             kereső.megoldásKiírása(kereső.Keresés());
             Console.ReadLine();
@@ -60,8 +60,8 @@ namespace ConsoleApp1
                 {21,-1,-1,14},
                 {-1,-1,-1,13},
                 {23,-1,-1,22},
-                {12,-1,-1,13},
-                {21,-1,-1,24}
+                {12,-1,-1,-1},
+                {11,-1,-1,24}
             }; //részcél2
 
         int[,] részcél3Tábla = new int[5, 4]
@@ -69,28 +69,43 @@ namespace ConsoleApp1
                 {21,24,23,-1},
                 {-1,-1,-1,-1},
                 {-1,12,-1,22},
-                {-1,-1,-1,13},
+                {-1,-1,-1,-1},
                 {11,-1,13,14}
             }; //részcél3
+
+        int[,] részcél4Tábla = new int[5, 4]
+            {
+                {21,22,23,24},
+                {-1,-1,-1,-1},
+                {-1,12,-1,22},
+                {-1,-1,-1,-1},
+                {11,12,13,14}
+            }; //részcél4
 
 
         public override int RészCélokSzáma()
         {
-            return 3;
+            return 4;
         }
 
         public override bool RészCélE(int i)
         {
             switch (i)
             {
-                case 0: return Array.Equals(tábla, részcél1Tábla); //összehasonlítom az eredeti táblát az 1. részcéllal, hogy a részcélt elértük-e
-                case 1: return Array.Equals(tábla, részcél2Tábla);
-                case 2: return Array.Equals(tábla, részcél3Tábla);
+                case 0:
+                    return tábla.Cast<int>().SequenceEqual(részcél1Tábla.Cast<int>());
+                //összehasonlítom az eredeti táblát az 1. részcéllal, hogy a részcélt elértük-e
+                case 1:
+                    return tábla.Cast<int>().SequenceEqual(részcél2Tábla.Cast<int>());
+                case 2:
+                    return tábla.Cast<int>().SequenceEqual(részcél3Tábla.Cast<int>());
+                case 3:
+                    return tábla.Cast<int>().SequenceEqual(részcél4Tábla.Cast<int>());
 
                 default: return false;
             }
-                
-            
+
+
         }
 
         public override int TranzakciókSzáma(int részCélIndexe)
@@ -100,6 +115,7 @@ namespace ConsoleApp1
                 case 0: return 1;
                 case 1: return 1;
                 case 2: return 1;
+                case 3: return 1;
                 default: return 0;
             }
         }
@@ -124,6 +140,12 @@ namespace ConsoleApp1
                     switch (i)
                     {
                         case 0: return T3();
+                        default: return false;
+                    }
+                case 3:
+                    switch (i)
+                    {
+                        case 0: return T4();
                         default: return false;
                     }
 
@@ -272,7 +294,7 @@ namespace ConsoleApp1
             mentés.tábla = (int[,])tábla.Clone();
             return mentés;
         }
-        public override bool Equals(Object a) 
+        public override bool Equals(Object a)
         {
             if (a == null) return false;
             if (!(a is Feladat2p4)) return false;
@@ -285,7 +307,7 @@ namespace ConsoleApp1
             return tábla.GetHashCode(); // Ha két példány egyenlő, akkor a hasítókódjuk is egyenlő
         }
 
-        
+
         private bool T1()
         {
             return SzuperOperátor(12) &&
@@ -323,6 +345,20 @@ namespace ConsoleApp1
                    SzuperOperátor(41) &&
                    SzuperOperátor(40) &&
                    SzuperOperátor(14);
+        }
+
+        private bool T4()
+        {
+            return SzuperOperátor(65) &&
+                   SzuperOperátor(88) &&
+                   SzuperOperátor(15) &&
+                   SzuperOperátor(87) &&
+                   SzuperOperátor(63) &&
+                   SzuperOperátor(16) &&
+                   SzuperOperátor(86) &&
+                   SzuperOperátor(66) &&
+                   SzuperOperátor(63) &&
+                   SzuperOperátor(13);
         }
 
 
@@ -371,7 +407,7 @@ namespace ConsoleApp1
 
             // Ellenőrizzük, hogy az új pozíció a táblán belül van-e. Ha nem, akkor visszatérünk hamis értékkel, mert a lépés nem érvényes.
             if (újX < 0 || újX > 4 || újY < 0 || újY > 3)
-            return false;
+                return false;
 
             // Ellenőrizzük, hogy az új pozíció üres-e. Ha nem, akkor visszatérünk hamis értékkel, mert a lépés nem érvényes.
             if (tábla[újX, újY] != -1)
@@ -411,7 +447,7 @@ namespace ConsoleApp1
                 {
                     // Ha az adott mezőn ellenséges bábu van, és üti a bábu új pozícióját, akkor a lépés nem érvényes.
                     if (ellenségesBábu(tábla[x, y], bábu) && üti(x, y, újX, újY))
-                            return false;
+                        return false;
                 }
             }
             // Ha mindegyik ellenőrzés sikeres, akkor a lépés érvényes, és visszatérünk igaz értékkel.
@@ -419,14 +455,14 @@ namespace ConsoleApp1
         }
 
         int keresX(int bábu)
-            
-        {            
+
+        {
             for (int x = 0; x < 5; x++)
             {
                 for (int y = 0; y < 4; y++)
                 {
                     if (tábla[x, y] == bábu) return x;
-                    
+
                 }
             }
 
@@ -445,7 +481,7 @@ namespace ConsoleApp1
             return -1; //lehetetlen eset
         }
 
-        
+
         public override bool ÁllapotE()
         {
             for (int x = 0; x < 5; x++)
@@ -476,14 +512,14 @@ namespace ConsoleApp1
                 bool fekete = false;
                 bool fehér = false;
                 // Megnézzük, hogy a táblán van-e a bábu
-                for (int i = 0; i < 5; i++)
+                for (int x = 0; x < 5; x++)
                 {
-                    for (int j = 0; j < 4; j++)
+                    for (int y = 0; y < 4; y++)
                     {
                         // Ha a táblán van a fekete bábu
-                        if (tábla[i, j] == bábuFekete) fekete = true;
+                        if (tábla[x, y] == bábuFekete) fekete = true;
                         // Ha a táblán van a fehér bábu
-                        if (tábla[i, j] == bábuFehér) fehér = true;
+                        if (tábla[x, y] == bábuFehér) fehér = true;
                     }
                 }
                 // Ha valamelyik bábu nincs a táblán, akkor a kód hamis értéket ad vissza
@@ -497,30 +533,13 @@ namespace ConsoleApp1
 
         public override string ToString()
         {
-        StringBuilder sb = new StringBuilder();
-    
-             for (int x = 0; x < 5; x++)
-             {
-                for (int y = 0; y < 4; y++)
-                {
-                        sb.Append(tábla[x, y]);
-                        sb.Append("\t");
-                }
-                sb.AppendLine();
-             }
-
-             return sb.ToString();
-        }
-
-        string részCélkiír()
-        {
             StringBuilder sb = new StringBuilder();
 
             for (int x = 0; x < 5; x++)
             {
                 for (int y = 0; y < 4; y++)
                 {
-                    sb.Append(részcél1Tábla[x, y]);
+                    sb.Append(tábla[x, y]);
                     sb.Append("\t");
                 }
                 sb.AppendLine();
@@ -528,6 +547,7 @@ namespace ConsoleApp1
 
             return sb.ToString();
         }
+
     }
     //8.5.1
     // <summary>
