@@ -60,8 +60,8 @@ namespace ConsoleApp1
                 {21,-1,-1,14},
                 {-1,-1,-1,13},
                 {23,-1,-1,22},
-                {12,-1,-1,13},
-                {21,-1,-1,24}
+                {12,-1,-1,-1},
+                {11,-1,-1,24}
             }; //részcél2
 
         int[,] részcél3Tábla = new int[5, 4]
@@ -69,14 +69,23 @@ namespace ConsoleApp1
                 {21,24,23,-1},
                 {-1,-1,-1,-1},
                 {-1,12,-1,22},
-                {-1,-1,-1,13},
+                {-1,-1,-1,-1},
                 {11,-1,13,14}
             }; //részcél3
+
+        int[,] részcél4Tábla = new int[5, 4]
+            {
+                {21,22,23,24},
+                {-1,-1,-1,-1},
+                {-1,12,-1,22},
+                {-1,-1,-1,-1},
+                {11,12,13,14}
+            }; //részcél4
 
 
         public override int RészCélokSzáma()
         {
-            return 3;
+            return 4;
         }
 
         public override bool RészCélE(int i)
@@ -85,7 +94,7 @@ namespace ConsoleApp1
             {
                 case 0:
                     Console.WriteLine("Részcél összehasonlítás");
-                    bool egyenlőek = Array.Equals(tábla, részcél1Tábla);
+                    bool egyenlőek = tábla.Cast<int>().SequenceEqual(részcél1Tábla.Cast<int>()) ;
                     Console.WriteLine($"A tábla és a részcél1Tábla egyenlőek: {egyenlőek}");
                     Console.WriteLine("Tábla aktuális állapota:");
                     Console.WriteLine(ToString());
@@ -93,8 +102,26 @@ namespace ConsoleApp1
                     Console.WriteLine(részCélkiír());
                     return egyenlőek;
                 //összehasonlítom az eredeti táblát az 1. részcéllal, hogy a részcélt elértük-e
-                case 1: return Array.Equals(tábla, részcél2Tábla);
-                case 2: return Array.Equals(tábla, részcél3Tábla);
+                case 1:
+                    Console.WriteLine("Részcél összehasonlítás");
+                    bool egyenlőek2 = tábla.Cast<int>().SequenceEqual(részcél2Tábla.Cast<int>());
+                    Console.WriteLine($"A tábla és a részcél1Tábla egyenlőek: {egyenlőek2}");
+                    Console.WriteLine("Tábla aktuális állapota:");
+                    Console.WriteLine(ToString());
+                    Console.WriteLine("Részcél2Tábla tartalma:");
+                    Console.WriteLine(részCélkiír2());
+                    return egyenlőek2;
+                case 2:
+                    Console.WriteLine("Részcél összehasonlítás");
+                    bool egyenlőek3 = tábla.Cast<int>().SequenceEqual(részcél3Tábla.Cast<int>());
+                    Console.WriteLine($"A tábla és a részcél1Tábla egyenlőek: {egyenlőek3}");
+                    Console.WriteLine("Tábla aktuális állapota:");
+                    Console.WriteLine(ToString());
+                    Console.WriteLine("Részcél3Tábla tartalma:");
+                    Console.WriteLine(részCélkiír3());
+                    return egyenlőek3;
+                case 3:
+                    return tábla.Cast<int>().SequenceEqual(részcél4Tábla.Cast<int>());
 
                 default: return false;
             }
@@ -109,6 +136,7 @@ namespace ConsoleApp1
                 case 0: return 1;
                 case 1: return 1;
                 case 2: return 1;
+                case 3: return 1;
                 default: return 0;
             }
         }
@@ -139,6 +167,14 @@ namespace ConsoleApp1
                         case 0:
                             Console.WriteLine("Belépek T3-ba");
                             return T3();
+                        default: return false;
+                    }
+                case 3:
+                    switch (i)
+                    {
+                        case 0:
+                            Console.WriteLine("Belépek T4-be");
+                            return T4();
                         default: return false;
                     }
 
@@ -340,6 +376,20 @@ namespace ConsoleApp1
                    SzuperOperátor(14);
         }
 
+        private bool T4()
+        {
+            return SzuperOperátor(65) &&
+                   SzuperOperátor(88) &&
+                   SzuperOperátor(15) &&
+                   SzuperOperátor(87) &&
+                   SzuperOperátor(63) &&
+                   SzuperOperátor(16) &&
+                   SzuperOperátor(86) &&
+                   SzuperOperátor(66) &&
+                   SzuperOperátor(63) &&
+                   SzuperOperátor(13);
+        }
+
 
 
         bool lép(int bábu, int irányX, int irányY, int lépés)
@@ -496,14 +546,14 @@ namespace ConsoleApp1
                 bool fekete = false;
                 bool fehér = false;
                 // Megnézzük, hogy a táblán van-e a bábu
-                for (int i = 0; i < 5; i++)
+                for (int x = 0; x < 5; x++)
                 {
-                    for (int j = 0; j < 4; j++)
+                    for (int y = 0; y < 4; y++)
                     {
                         // Ha a táblán van a fekete bábu
-                        if (tábla[i, j] == bábuFekete) fekete = true;
+                        if (tábla[x, y] == bábuFekete) fekete = true;
                         // Ha a táblán van a fehér bábu
-                        if (tábla[i, j] == bábuFehér) fehér = true;
+                        if (tábla[x, y] == bábuFehér) fehér = true;
                     }
                 }
                 // Ha valamelyik bábu nincs a táblán, akkor a kód hamis értéket ad vissza
@@ -541,6 +591,40 @@ namespace ConsoleApp1
                 for (int y = 0; y < 4; y++)
                 {
                     sb.Append(részcél1Tábla[x, y]);
+                    sb.Append("\t");
+                }
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
+        }
+
+        string részCélkiír2()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            for (int x = 0; x < 5; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    sb.Append(részcél2Tábla[x, y]);
+                    sb.Append("\t");
+                }
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
+        }
+
+        string részCélkiír3()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            for (int x = 0; x < 5; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    sb.Append(részcél3Tábla[x, y]);
                     sb.Append("\t");
                 }
                 sb.AppendLine();
