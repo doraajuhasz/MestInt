@@ -14,6 +14,7 @@ namespace ConsoleApp1
         {
             AbsztraktÁllapot k = new Feladat2p4();
             Csúcs start = new Csúcs(k);
+            Console.WriteLine(start.ToString());
             GráfKereső kereső = new BackTrack(start, 8, true);
             kereső.megoldásKiírása(kereső.Keresés());
             Console.ReadLine();
@@ -82,7 +83,16 @@ namespace ConsoleApp1
         {
             switch (i)
             {
-                case 0: return Array.Equals(tábla, részcél1Tábla); //összehasonlítom az eredeti táblát az 1. részcéllal, hogy a részcélt elértük-e
+                case 0:
+                    Console.WriteLine("Részcél összehasonlítás");
+                    bool egyenlőek = Array.Equals(tábla, részcél1Tábla);
+                    Console.WriteLine($"A tábla és a részcél1Tábla egyenlőek: {egyenlőek}");
+                    Console.WriteLine("Tábla aktuális állapota:");
+                    Console.WriteLine(ToString());
+                    Console.WriteLine("Részcél1Tábla tartalma:");
+                    Console.WriteLine(részCélkiír());
+                    return egyenlőek;
+                //összehasonlítom az eredeti táblát az 1. részcéllal, hogy a részcélt elértük-e
                 case 1: return Array.Equals(tábla, részcél2Tábla);
                 case 2: return Array.Equals(tábla, részcél3Tábla);
 
@@ -110,19 +120,25 @@ namespace ConsoleApp1
                 case 0:
                     switch (i)
                     {
-                        case 0: return T1();
+                        case 0:
+                            Console.WriteLine("Belépek T1-be");
+                            return T1();
                         default: return false;
                     }
                 case 1:
                     switch (i)
                     {
-                        case 0: return T2();
+                        case 0:
+                            Console.WriteLine("Belépek T2-be");
+                            return T2();
                         default: return false;
                     }
                 case 2:
                     switch (i)
                     {
-                        case 0: return T3();
+                        case 0:
+                            Console.WriteLine("Belépek T3-ba"); 
+                            return T3();
                         default: return false;
                     }
 
@@ -271,18 +287,17 @@ namespace ConsoleApp1
             mentés.tábla = (int[,])tábla.Clone();
             return mentés;
         }
-
         public override bool Equals(Object a) 
         {
             if (a == null) return false;
             if (!(a is Feladat2p4)) return false;
             Feladat2p4 másik = (Feladat2p4)a;
-            return tábla.Cast<int>().SequenceEqual(másik.tábla.Cast<int>()); //összehasonlítja a tömbök elemeit és a kijön boolean állapotát
+            return tábla.Cast<int>().SequenceEqual(másik.tábla.Cast<int>()); //összehasonlítja a tömbök elemeit
         }
 
         public override int GetHashCode()
         {
-            return tábla.GetHashCode(); //// Ha két példány egyenlő, akkor a hasítókódjuk is egyenlő
+            return tábla.GetHashCode(); // Ha két példány egyenlő, akkor a hasítókódjuk is egyenlő
         }
 
         
@@ -330,6 +345,8 @@ namespace ConsoleApp1
         bool lép(int bábu, int irányX, int irányY, int lépés)
         {
             if (!preLép(bábu, irányX, irányY, lépés)) return false; //ellenőrzöm, hogy az előfeltétel teljesül-e
+            Console.WriteLine(bábu + " bábuval lépek");
+            int[,] mentés = (int[,])tábla.Clone(); //klónozás
             int bábuX = keresX(bábu);
             int bábuY = keresY(bábu);
             //átteszem a bábut
@@ -340,13 +357,25 @@ namespace ConsoleApp1
             tábla[bábuX, bábuY] = -1;
             //az új helyre pedig a bábu száma kerül
             tábla[újX, újY] = bábu;
-            return ÁllapotE();
+            Console.WriteLine("Új X: " + újX + "  Új Y: " + újY);
+            if (ÁllapotE())
+            {
+                // Ha az állapot érvényes, akkor további lépéseket hajthatunk végre, vagy visszatérhetünk true értékkel
+                Console.WriteLine("érvényes állapot");
+                return true;
+            }
+            else
+            {
+                // Ha az állapot nem érvényes, akkor visszaállítjuk a táblát a mentésből
+                tábla = mentés;
+                Console.WriteLine("Állapot nem érvényes");
+                return false;
+            }
 
         }
 
         private bool preLép(int bábu, int irányX, int irányY, int lépés)
         {
-
             // Megkeressük a bábu pozícióját a táblán.
             int bábuX = keresX(bábu);
             int bábuY = keresY(bábu);
@@ -357,9 +386,6 @@ namespace ConsoleApp1
 
             // Kiszámítjuk, hogy hova szeretnénk lépni a bábúval.
             int újX = bábuX + lépés * irányX;
-            //Console.WriteLine(bábuX) ;
-            //Console.WriteLine(lépés);
-            //Console.WriteLine(irányX);
             int újY = bábuY + lépés * irányY;
 
             // Ellenőrizzük, hogy az új pozíció a táblán belül van-e. Ha nem, akkor visszatérünk hamis értékkel, mert a lépés nem érvényes.
@@ -404,42 +430,37 @@ namespace ConsoleApp1
                 for (int y = 0; y < 4; y++)
                 {
                     // Ha az adott mezőn ellenséges bábu van, és üti a bábu új pozícióját, akkor a lépés nem érvényes.
-                    if (ellenségesBábu(tábla[x, y], bábu) && üti(x, y, újX, újY)) return false;
+                    if (ellenségesBábu(tábla[x, y], bábu) && üti(x, y, újX, újY))
+                            return false;
                 }
             }
-
-
+            Console.WriteLine("érvényes feltételek a lépéshez");
             // Ha mindegyik ellenőrzés sikeres, akkor a lépés érvényes, és visszatérünk igaz értékkel.
             return true;
         }
 
         int keresX(int bábu)
             
-        {
-            //Console.WriteLine(bábu);
+        {            
             for (int x = 0; x < 5; x++)
             {
                 for (int y = 0; y < 4; y++)
                 {
                     if (tábla[x, y] == bábu) return x;
-                    //Console.WriteLine(bábu + " - bábu értéke ekkor");
-                    //Console.WriteLine(tábla[x, y] + " - tábla értéke ekkor");
+                    
                 }
             }
+
             return -1; //lehetetlen eset
         }
         int keresY(int bábu)
 
         {
-            Console.WriteLine(bábu + " - Y bemeneti bábu");
             for (int x = 0; x < 5; x++)
             {
                 for (int y = 0; y < 4; y++)
                 {
                     if (tábla[x, y] == bábu) return y;
-                    Console.WriteLine(y + " - y értéke");
-                    Console.WriteLine(bábu + " - bábu értéke ekkor");
-                    Console.WriteLine(tábla[x, y] + " - tábla értéke ekkor");
                 }
             }
             return -1; //lehetetlen eset
@@ -511,7 +532,23 @@ namespace ConsoleApp1
 
              return sb.ToString();
         }
-        
+
+        string részCélkiír()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            for (int x = 0; x < 5; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    sb.Append(részcél1Tábla[x, y]);
+                    sb.Append("\t");
+                }
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
+        }
     }
     //8.5.1
     // <summary>
