@@ -1,0 +1,781 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
+using System.Text;
+using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
+
+namespace ConsoleApp1
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            AbsztraktÁllapot k = new Feladat2p4();
+            Csúcs start = new Csúcs(k);
+            Console.WriteLine(start.ToString());
+            GráfKereső kereső = new BackTrack(start, 8, true);
+            kereső.megoldásKiírása(kereső.Keresés());
+            Console.ReadLine();
+        }
+    }
+    // (A,k,C,O,PRE,POST)
+    // (A,k,RészCélok,C,O,PRE+Stratégia,POST)
+    abstract class AbsztraktÁllapot : ICloneable
+    {
+        public virtual object Clone() { return MemberwiseClone(); }
+        public abstract bool ÁllapotE();
+        public abstract int RészCélokSzáma();
+        public abstract bool RészCélE(int i);
+        public abstract int TranzakciókSzáma(int részCélIndexe);
+        public abstract bool Tranzakció(int részCélIndexe, int i);
+        public abstract bool CélÁllapotE();
+        public abstract int OperátorokSzáma();
+        public abstract bool SzuperOperátor(int i);
+        //public abstract void SetRészCél(int kövRészCélIndexe);
+
+    }
+    class Feladat2p4 : AbsztraktÁllapot
+    {
+        int[,] tábla = new int[5, 4]
+            {
+                {11,12,13,14}, //csupa fekete
+                {-1,-1,-1,-1},// üres sorok
+                {-1,-1,-1,-1},
+                {-1,-1,-1,-1},
+                {21,22,23,24} //csupa fehér
+            }; //kiinduló állapot
+        int[,] részcél1Tábla = new int[5, 4]
+            {
+                {11,-1,-1,14},
+                {-1,-1,-1,-1},
+                {23,-1,-1,22},
+                {12,-1,-1,13},
+                {21,-1,-1,24}
+            }; //részcél1
+
+        int[,] részcél2Tábla = new int[5, 4]
+            {
+                {21,-1,-1,14},
+                {-1,-1,-1,13},
+                {23,-1,-1,22},
+                {12,-1,-1,13},
+                {21,-1,-1,24}
+            }; //részcél2
+
+        int[,] részcél3Tábla = new int[5, 4]
+            {
+                {21,24,23,-1},
+                {-1,-1,-1,-1},
+                {-1,12,-1,22},
+                {-1,-1,-1,13},
+                {11,-1,13,14}
+            }; //részcél3
+
+
+        public override int RészCélokSzáma()
+        {
+            return 3;
+        }
+
+        public override bool RészCélE(int i)
+        {
+            switch (i)
+            {
+                case 0:
+                    Console.WriteLine("Részcél összehasonlítás");
+                    bool egyenlőek = Array.Equals(tábla, részcél1Tábla);
+                    Console.WriteLine($"A tábla és a részcél1Tábla egyenlőek: {egyenlőek}");
+                    Console.WriteLine("Tábla aktuális állapota:");
+                    Console.WriteLine(ToString());
+                    Console.WriteLine("Részcél1Tábla tartalma:");
+                    Console.WriteLine(részCélkiír());
+                    return egyenlőek;
+                //összehasonlítom az eredeti táblát az 1. részcéllal, hogy a részcélt elértük-e
+                case 1: return Array.Equals(tábla, részcél2Tábla);
+                case 2: return Array.Equals(tábla, részcél3Tábla);
+
+                default: return false;
+            }
+                
+            
+        }
+
+        public override int TranzakciókSzáma(int részCélIndexe)
+        {
+            switch (részCélIndexe)
+            {
+                case 0: return 1;
+                case 1: return 1;
+                case 2: return 1;
+                default: return 0;
+            }
+        }
+
+        public override bool Tranzakció(int részCélIndexe, int i)
+        {
+            switch (részCélIndexe)
+            {
+                case 0:
+                    switch (i)
+                    {
+                        case 0:
+                            Console.WriteLine("Belépek T1-be");
+                            return T1();
+                        default: return false;
+                    }
+                case 1:
+                    switch (i)
+                    {
+                        case 0:
+                            Console.WriteLine("Belépek T2-be");
+                            return T2();
+                        default: return false;
+                    }
+                case 2:
+                    switch (i)
+                    {
+                        case 0:
+                            Console.WriteLine("Belépek T3-ba"); 
+                            return T3();
+                        default: return false;
+                    }
+
+                default:
+                    return false;
+            }
+        }
+
+        public override bool CélÁllapotE()
+        {
+            //ehhez a 0.sort kell végignézni, hogy mind fehér-e, hanem, akkor return false
+            for (int y = 0; y < 4; y++)
+            {
+                if (!(tábla[0, y] >= 21 && tábla[0, y] <= 24)) return false;
+            }
+
+            for (int y = 0; y < 4; y++)
+            {
+                if (!(tábla[4, y] >= 11 && tábla[4, y] <= 14)) return false;
+            }
+            return true;
+
+        }
+
+        public override int OperátorokSzáma()
+        {
+            //4 bábu * 4 irány * hány lépés (1,2,3)
+            return 4 * 4 * 3; //ez összesen 48 eset
+
+        }
+
+
+        int bal = -1;
+        int jobb = 1;
+        int le = 1;
+        int fel = -1;
+
+        public override bool SzuperOperátor(int i)
+        {
+            switch (i)
+            {
+                case 0: return lép(11, le, jobb, 1); //11-es bábu lép jobbra le 1-et
+                case 1: return lép(11, le, bal, 1);
+                case 2: return lép(11, fel, jobb, 1);
+                case 3: return lép(11, fel, bal, 1);
+                case 4: return lép(11, le, jobb, 2);
+                case 5: return lép(11, le, bal, 2);
+                case 6: return lép(11, fel, jobb, 2);
+                case 7: return lép(11, fel, bal, 2);
+                case 8: return lép(11, le, jobb, 3);
+                case 9: return lép(11, le, bal, 3);
+                case 10: return lép(11, fel, jobb, 3);
+                case 11: return lép(11, fel, bal, 3);
+                case 12: return lép(12, le, jobb, 1);
+                case 13: return lép(12, le, bal, 1);
+                case 14: return lép(12, fel, jobb, 1);
+                case 15: return lép(12, fel, bal, 1);
+                case 16: return lép(12, le, jobb, 2);
+                case 17: return lép(12, le, bal, 2);
+                case 18: return lép(12, fel, jobb, 2);
+                case 19: return lép(12, fel, bal, 2);
+                case 20: return lép(12, le, jobb, 3);
+                case 21: return lép(12, le, bal, 3);
+                case 22: return lép(12, fel, jobb, 3);
+                case 23: return lép(12, fel, bal, 3);
+                case 24: return lép(13, le, jobb, 1);
+                case 25: return lép(13, le, bal, 1);
+                case 26: return lép(13, fel, jobb, 1);
+                case 27: return lép(13, fel, bal, 1);
+                case 28: return lép(13, le, jobb, 2);
+                case 29: return lép(13, le, bal, 2);
+                case 30: return lép(13, fel, jobb, 2);
+                case 31: return lép(13, fel, bal, 2);
+                case 32: return lép(13, le, jobb, 3);
+                case 33: return lép(13, le, bal, 3);
+                case 34: return lép(13, fel, jobb, 3);
+                case 35: return lép(13, fel, bal, 3);
+                case 36: return lép(14, le, jobb, 1);
+                case 37: return lép(14, le, bal, 1);
+                case 38: return lép(14, fel, jobb, 1);
+                case 39: return lép(14, fel, bal, 1);
+                case 40: return lép(14, le, jobb, 2);
+                case 41: return lép(14, le, bal, 2);
+                case 42: return lép(14, fel, jobb, 2);
+                case 43: return lép(14, fel, bal, 2);
+                case 44: return lép(14, le, jobb, 3);
+                case 45: return lép(14, le, bal, 3);
+                case 46: return lép(14, fel, jobb, 3);
+                case 47: return lép(14, fel, bal, 3);
+                case 48: return lép(21, le, jobb, 1);
+                case 49: return lép(21, le, bal, 1);
+                case 50: return lép(21, fel, jobb, 1);
+                case 51: return lép(21, fel, bal, 1);
+                case 52: return lép(21, le, jobb, 2);
+                case 53: return lép(21, le, bal, 2);
+                case 54: return lép(21, fel, jobb, 2);
+                case 55: return lép(21, fel, bal, 2);
+                case 56: return lép(21, le, jobb, 3);
+                case 57: return lép(21, le, bal, 3);
+                case 58: return lép(21, fel, jobb, 3);
+                case 59: return lép(21, fel, bal, 3);
+                case 60: return lép(22, le, jobb, 1);
+                case 61: return lép(22, le, bal, 1);
+                case 62: return lép(22, fel, jobb, 1);
+                case 63: return lép(22, fel, bal, 1);
+                case 64: return lép(22, le, jobb, 2);
+                case 65: return lép(22, le, bal, 2);
+                case 66: return lép(22, fel, jobb, 2);
+                case 67: return lép(22, fel, bal, 2);
+                case 68: return lép(22, le, jobb, 3);
+                case 69: return lép(22, le, bal, 3);
+                case 70: return lép(22, fel, jobb, 3);
+                case 71: return lép(22, fel, bal, 3);
+                case 72: return lép(23, le, jobb, 1);
+                case 73: return lép(23, le, bal, 1);
+                case 74: return lép(23, fel, jobb, 1);
+                case 75: return lép(23, fel, bal, 1);
+                case 76: return lép(23, le, jobb, 2);
+                case 77: return lép(23, le, bal, 2);
+                case 78: return lép(23, fel, jobb, 2);
+                case 79: return lép(23, fel, bal, 2);
+                case 80: return lép(23, le, jobb, 3);
+                case 81: return lép(23, le, bal, 3);
+                case 82: return lép(23, fel, jobb, 3);
+                case 83: return lép(23, fel, bal, 3);
+                case 84: return lép(24, le, jobb, 1);
+                case 85: return lép(24, le, bal, 1);
+                case 86: return lép(24, fel, jobb, 1);
+                case 87: return lép(24, fel, bal, 1);
+                case 88: return lép(24, le, jobb, 2);
+                case 89: return lép(24, le, bal, 2);
+                case 90: return lép(24, fel, jobb, 2);
+                case 91: return lép(24, fel, bal, 2);
+                case 92: return lép(24, le, jobb, 3);
+                case 93: return lép(24, le, bal, 3);
+                case 94: return lép(24, fel, jobb, 3);
+                case 95: return lép(24, fel, bal, 3);
+
+                default: return false;
+            }
+        }
+
+        public override object Clone() //Ezt most felül kell írni, mert tömb típusú mezőnk is van.
+        {
+            Feladat2p4 mentés = new Feladat2p4();
+            mentés.tábla = (int[,])tábla.Clone();
+            return mentés;
+        }
+        public override bool Equals(Object a) 
+        {
+            if (a == null) return false;
+            if (!(a is Feladat2p4)) return false;
+            Feladat2p4 másik = (Feladat2p4)a;
+            return tábla.Cast<int>().SequenceEqual(másik.tábla.Cast<int>()); //összehasonlítja a tömbök elemeit
+        }
+
+        public override int GetHashCode()
+        {
+            return tábla.GetHashCode(); // Ha két példány egyenlő, akkor a hasítókódjuk is egyenlő
+        }
+
+        
+        private bool T1()
+        {
+            return SzuperOperátor(12) &&
+                   SzuperOperátor(25) &&
+                   SzuperOperátor(62) &&
+                   SzuperOperátor(17) &&
+                   SzuperOperátor(62) &&
+                   SzuperOperátor(75) &&
+                   SzuperOperátor(28) &&
+                   SzuperOperátor(75);
+        }
+
+        private bool T2()
+        {
+            return SzuperOperátor(58) &&
+                   SzuperOperátor(51) &&
+                   SzuperOperátor(4) &&
+                   SzuperOperátor(5) &&
+                   SzuperOperátor(27) &&
+                   SzuperOperátor(76) &&
+                   SzuperOperátor(53) &&
+                   SzuperOperátor(26) &&
+                   SzuperOperátor(50) &&
+                   SzuperOperátor(79) &&
+                   SzuperOperátor(51);
+        }
+        private bool T3()
+        {
+            return SzuperOperátor(74) &&
+                   SzuperOperátor(29) &&
+                   SzuperOperátor(74) &&
+                   SzuperOperátor(24) &&
+                   SzuperOperátor(95) &&
+                   SzuperOperátor(86) &&
+                   SzuperOperátor(41) &&
+                   SzuperOperátor(40) &&
+                   SzuperOperátor(14);
+        }
+
+
+
+        bool lép(int bábu, int irányX, int irányY, int lépés)
+        {
+            if (!preLép(bábu, irányX, irányY, lépés)) return false; //ellenőrzöm, hogy az előfeltétel teljesül-e
+            Console.WriteLine(bábu + " bábuval lépek");
+            int[,] mentés = (int[,])tábla.Clone(); //klónozás
+            int bábuX = keresX(bábu);
+            int bábuY = keresY(bábu);
+            //átteszem a bábut
+
+            int újX = bábuX + lépés * irányX; //irány X vagy 1 v -1
+            int újY = bábuY + lépés * irányY; //irány Y vagy 1 v -1
+            //a bábu régi helye üres lesz, azaz a helyére -1-et kell írni
+            tábla[bábuX, bábuY] = -1;
+            //az új helyre pedig a bábu száma kerül
+            tábla[újX, újY] = bábu;
+            Console.WriteLine("Új X: " + újX + "  Új Y: " + újY);
+            if (ÁllapotE())
+            {
+                // Ha az állapot érvényes, akkor további lépéseket hajthatunk végre, vagy visszatérhetünk true értékkel
+                Console.WriteLine("érvényes állapot");
+                return true;
+            }
+            else
+            {
+                // Ha az állapot nem érvényes, akkor visszaállítjuk a táblát a mentésből
+                tábla = mentés;
+                Console.WriteLine("Állapot nem érvényes");
+                return false;
+            }
+
+        }
+
+        private bool preLép(int bábu, int irányX, int irányY, int lépés)
+        {
+            // Megkeressük a bábu pozícióját a táblán.
+            int bábuX = keresX(bábu);
+            int bábuY = keresY(bábu);
+
+            // Ellenőrizzük, hogy a bábu a táblán belül van-e. Ha nem, akkor visszatérünk hamis értékkel, mert a lépés nem érvényes.
+            if (bábuX < 0 || bábuX > 4 || bábuY < 0 || bábuY > 3)
+                return false;
+
+            // Kiszámítjuk, hogy hova szeretnénk lépni a bábúval.
+            int újX = bábuX + lépés * irányX;
+            int újY = bábuY + lépés * irányY;
+
+            // Ellenőrizzük, hogy az új pozíció a táblán belül van-e. Ha nem, akkor visszatérünk hamis értékkel, mert a lépés nem érvényes.
+            if (újX < 0 || újX > 4 || újY < 0 || újY > 3)
+                //Console.WriteLine("A bábu nincs a táblán belül.");
+            return false;
+
+            // Ellenőrizzük, hogy az új pozíció üres-e. Ha nem, akkor visszatérünk hamis értékkel, mert a lépés nem érvényes.
+            if (tábla[újX, újY] != -1)
+                return false;
+
+            // Ellenőrizzük, hogy a lépés átlós-e. Ha nem, akkor visszatérünk hamis értékkel, mert a lépés nem érvényes.
+            if (Math.Abs(irányX) != Math.Abs(irányY))
+                return false; // A lépés nem átlós
+
+            // Ellenőrizzük, hogy az adott mezőn ellenséges bábu van-e a saját bábu számához képest.
+            bool ellenségesBábu(int mező, int sajátBábu)
+            {
+                if ((sajátBábu >= 11 && sajátBábu <= 14 && mező >= 21 && mező <= 24) ||
+                    (sajátBábu >= 21 && sajátBábu <= 24 && mező >= 11 && mező <= 14))
+                {
+                    return true; // Ellenséges bábu
+                }
+
+                return false; // Nem ellenséges bábu
+            }
+
+            bool üti(int ellenségesX, int ellenségesY, int újX, int újY)
+            {
+                // Ellenőrizzük, hogy az ellenséges bábu üti-e a bábu új pozícióját.
+                if (Math.Abs(ellenségesX - újX) == Math.Abs(ellenségesY - újY))
+                {
+                    // Ha az ellenséges bábu üti a bábu új pozícióját, akkor a lépés nem érvényes.
+                    return true;
+                }
+
+                return false;
+            }
+
+            for (int x = 0; x < 5; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    // Ha az adott mezőn ellenséges bábu van, és üti a bábu új pozícióját, akkor a lépés nem érvényes.
+                    if (ellenségesBábu(tábla[x, y], bábu) && üti(x, y, újX, újY))
+                            return false;
+                }
+            }
+            Console.WriteLine("érvényes feltételek a lépéshez");
+            // Ha mindegyik ellenőrzés sikeres, akkor a lépés érvényes, és visszatérünk igaz értékkel.
+            return true;
+        }
+
+        int keresX(int bábu)
+            
+        {            
+            for (int x = 0; x < 5; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    if (tábla[x, y] == bábu) return x;
+                    
+                }
+            }
+
+            return -1; //lehetetlen eset
+        }
+        int keresY(int bábu)
+
+        {
+            for (int x = 0; x < 5; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    if (tábla[x, y] == bábu) return y;
+                }
+            }
+            return -1; //lehetetlen eset
+        }
+
+        
+        public override bool ÁllapotE()
+        {
+            for (int x = 0; x < 5; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    // Ha a mezőn van bábu
+                    if (tábla[x, y] != -1)
+                    {
+                        // Megnézzük, hogy a táblán van-e másik mező, ahol ugyanaz a bábu található
+                        for (int másikX = 0; másikX < 5; másikX++)
+                        {
+                            for (int másikY = 0; másikY < 4; másikY++)
+                            {
+                                // Ha két különböző mezőn ugyanaz a bábu van, akkor a kód hamis értéket ad vissza
+                                if ((x != másikX || y != másikY) && tábla[x, y] == tábla[másikX, másikY]) return false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Ellenőrizzük, hogy minden bábu a táblán van-e
+            for (int bábu = 1; bábu < 5; bábu++)
+            {
+                int bábuFekete = bábu + 10;
+                int bábuFehér = bábu + 20;
+                bool fekete = false;
+                bool fehér = false;
+                // Megnézzük, hogy a táblán van-e a bábu
+                for (int i = 0; i < 5; i++)
+                {
+                    for (int j = 0; j < 4; j++)
+                    {
+                        // Ha a táblán van a fekete bábu
+                        if (tábla[i, j] == bábuFekete) fekete = true;
+                        // Ha a táblán van a fehér bábu
+                        if (tábla[i, j] == bábuFehér) fehér = true;
+                    }
+                }
+                // Ha valamelyik bábu nincs a táblán, akkor a kód hamis értéket ad vissza
+                if (!fekete || !fehér) return false;
+            }
+
+            // Ha mindegyik ellenőrzésen átment, akkor az állapot érvényes
+            return true;
+
+        }
+
+        public override string ToString()
+        {
+        StringBuilder sb = new StringBuilder();
+    
+             for (int x = 0; x < 5; x++)
+             {
+                for (int y = 0; y < 4; y++)
+                {
+                        sb.Append(tábla[x, y]);
+                        sb.Append("\t");
+                }
+                sb.AppendLine();
+             }
+
+             return sb.ToString();
+        }
+
+        string részCélkiír()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            for (int x = 0; x < 5; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    sb.Append(részcél1Tábla[x, y]);
+                    sb.Append("\t");
+                }
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
+        }
+    }
+    //8.5.1
+    // <summary>
+    /// A csúcs tartalmaz egy állapotot, a csúcs mélységét, és a csúcs szülőjét.
+    /// Így egy csúcs egy egész utat reprezentál a start csúcsig.
+    /// </summary>
+    class Csúcs
+    {
+        // A csúcs tartalmaz egy állapotot, a mélységét és a szülőjét
+        AbsztraktÁllapot állapot;
+        int mélység;
+        Csúcs szülő; // A szülőkön felfelé haladva a start csúcsig jutok.
+                     // Konstruktor:
+                     // A belső állapotot beállítja a start csúcsra.
+                     // A hívó felelőssége, hogy a kezdő állapottal hívja meg.
+                     // A start csúcs mélysége 0, szülője nincs.
+        public Csúcs(AbsztraktÁllapot kezdőÁllapot)
+        {
+            állapot = kezdőÁllapot;
+            mélység = 0;
+            szülő = null;
+        }
+        // Egy új gyermek csúcsot készít.
+        // Erre még meg kell hívni egy alkalmazható operátor is, csak azután lesz kész.
+        public Csúcs(Csúcs szülő)
+        {
+            állapot = (AbsztraktÁllapot)szülő.állapot.Clone();
+            mélység = szülő.mélység + 1;
+            this.szülő = szülő;
+        }
+        public Csúcs GetSzülő() { return szülő; }
+        public int GetMélység() { return mélység; }
+        public bool TerminálisCsúcsE() { return állapot.CélÁllapotE(); }
+        public int OperátorokSzáma() { return állapot.OperátorokSzáma(); }
+        public bool SzuperOperátor(int i) { return állapot.SzuperOperátor(i); }
+        public int TranzakciókSzáma(int részCélIndexe)
+        {
+            return állapot.TranzakciókSzáma(részCélIndexe);
+        }
+        public bool Tranzakció(int részCélIndexe, int ti)
+        {
+            return állapot.Tranzakció(részCélIndexe, ti);
+        }
+        public bool RészCélE(int részCélIndexe)
+        {
+            return állapot.RészCélE(részCélIndexe);
+        }
+        public override bool Equals(Object obj)
+        {
+            Csúcs cs = (Csúcs)obj;
+            return állapot.Equals(cs.állapot);
+        }
+        public override int GetHashCode() { return állapot.GetHashCode(); }
+        public override String ToString() { return állapot.ToString(); }
+        // Alkalmazza az összes alkalmazható operátort.
+        // Visszaadja az így előálló új csúcsokat.
+        public List<Csúcs> Kiterjesztes()
+        {
+            List<Csúcs> újCsúcsok = new List<Csúcs>();
+            for (int i = 0; i < OperátorokSzáma(); i++)
+            {
+                // Új gyermek csúcsot készítek.
+                Csúcs újCsúcs = new Csúcs(this);
+                // Kiprobálom az i.dik alapoperátort. Alkalmazható?
+                if (újCsúcs.SzuperOperátor(i))
+                {
+                    // Ha igen, hozzáadom az újakhoz.
+                    újCsúcsok.Add(újCsúcs);
+                }
+            }
+            return újCsúcsok;
+        }
+    }
+
+    // 8.6.1
+    /// <summary>
+    /// Minden gráfkereső algoritmus őse.
+    /// A gráfkeresőknek csak a Keresés metódust kell megvalósítaniuk.
+    /// Ez visszaad egy terminális csúcsot, ha talált megoldást, egyébként null értékkel tér vissza.
+    /// A terminális csúcsból a szülő referenciákon felfelé haladva áll elő a megoldás.
+    /// </summary>
+    abstract class GráfKereső
+    {
+        private Csúcs startCsúcs; // A start csúcs csúcs.
+                                  // Minden gráfkereső a start csúcsból kezd el keresni.
+        public GráfKereső(Csúcs startCsúcs)
+        {
+            this.startCsúcs = startCsúcs;
+        }
+        // Jobb, ha a start csúcs privát, de a gyermek osztályok lekérhetik.
+        protected Csúcs GetStartCsúcs() { return startCsúcs; }
+        /// Ha van megoldás, azaz van olyan út az állapottér gráfban,
+        /// ami a start csúcsból egy terminális csúcsba vezet,
+        /// akkor visszaad egy megoldást, egyébként null.
+        /// A megoldást egy terminális csúcsként adja vissza.
+        /// Ezen csúcs szülő referenciáin felfelé haladva adódik a megoldás fordított sorrendben.
+        public abstract Csúcs Keresés();
+        /// <summary>
+        /// Kiíratja a megoldást egy terminális csúcs alapján.
+        /// Feltételezi, hogy a terminális csúcs szülő referenciáján felfelé haladva eljutunk a start csúcshoz.
+        /// A csúcsok sorrendjét megfordítja, hogy helyesen tudja kiírni a megoldást.
+        /// Ha a csúcs null, akkor kiírja, hogy nincs megoldás.
+        /// </summary>
+        /// <param name="egyTerminálisCsúcs">
+        /// A megoldást képviselő terminális csúcs vagy null.
+        /// </param>
+        public void megoldásKiírása(Csúcs egyTerminálisCsúcs)
+        {
+            if (egyTerminálisCsúcs == null)
+            {
+                Console.WriteLine("Nincs megoldás");
+                return;
+            }
+            // Meg kell fordítani a csúcsok sorrendjét.
+            Stack<Csúcs> megoldás = new Stack<Csúcs>();
+            Csúcs aktCsúcs = egyTerminálisCsúcs;
+            while (aktCsúcs != null)
+            {
+                megoldás.Push(aktCsúcs);
+                aktCsúcs = aktCsúcs.GetSzülő();
+            }
+            // Megfordítottuk, lehet kiírni.
+            foreach (Csúcs akt in megoldás) Console.WriteLine(akt);
+        }
+    }
+
+    // 8.7.1
+    /// <summary>
+    /// A backtrack gráfkereső algoritmust megvalósító osztály.
+    /// A három alap backtrack algoritmust egyben tartalmazza. Ezek
+    /// - az alap backtrack
+    /// - mélységi korlátos backtrack
+    /// - emlékezetes backtrack
+    /// Az ág-korlátos backtrack nincs megvalósítva.
+    /// </summary>
+    class BackTrack : GráfKereső
+    {
+        int korlát; // Ha nem nulla, akkor mélységi korlátos kereső.
+        bool emlékezetes; // Ha igaz, emlékezetes kereső.
+        public BackTrack(Csúcs startCsúcs, int korlát, bool emlékezetes) : base(startCsúcs)
+        {
+            this.korlát = korlát;
+            this.emlékezetes = emlékezetes;
+        }
+        // nincs mélységi korlát, se emlékezet
+        public BackTrack(Csúcs startCsúcs) : this(startCsúcs, 0, false) { }
+        // mélységi korlátos kereső
+        public BackTrack(Csúcs startCsúcs, int korlát) : this(startCsúcs, korlát, false) { }
+        // emlékezetes kereső
+        public BackTrack(Csúcs startCsúcs, bool emlékezetes) : this(startCsúcs, 0, emlékezetes) { }
+        // A keresés a start csúcsból indul.
+        // Egy terminális csúcsot ad vissza. A start csúcsból el lehet jutni ebbe a terminális csúcsba.
+        // Ha nincs ilyen, akkor null értéket ad vissza.
+        public override Csúcs Keresés()
+        {
+            return Keresés(GetStartCsúcs(), 0);
+        }
+        // A kereső algoritmus rekurzív megvalósítása.
+        // Mivel rekurzív, ezért a visszalépésnek a "return null" felel meg.
+        private Csúcs Keresés(Csúcs aktCsúcs, int részCélIndexe)
+        {
+            int mélység = aktCsúcs.GetMélység();
+            // mélységi korlát vizsgálata
+            if (korlát > 0 && mélység >= korlát) return null;
+            // emlékezet használata kör kiszűréséhez
+            Csúcs aktSzülő = null;
+            if (emlékezetes) aktSzülő = aktCsúcs.GetSzülő();
+            while (aktSzülő != null)
+            {
+                // Ellenőrzöm, hogy jártam-e ebben az állapotban. Ha igen, akkor visszalépés.
+                if (aktCsúcs.Equals(aktSzülő)) return null;
+                // Visszafelé haladás a szülői láncon.
+                aktSzülő = aktSzülő.GetSzülő();
+            }
+            if (aktCsúcs.TerminálisCsúcsE())
+            {
+                // Megvan a megoldás, vissza kell adni a terminális csúcsot.
+                return aktCsúcs;
+            }
+
+            for (int ti = 0; ti < aktCsúcs.TranzakciókSzáma(részCélIndexe); ti++)
+            {
+                Csúcs újCsúcs = new Csúcs(aktCsúcs);
+                if (újCsúcs.Tranzakció(részCélIndexe, ti))
+                {
+                    // ha sikerült elérni a részcélt, akkor
+                    // növelni kell a részCélIndexét
+                    if (újCsúcs.RészCélE(részCélIndexe))
+                    {
+                        részCélIndexe++;
+                    }
+                    Csúcs terminális = Keresés(újCsúcs, részCélIndexe);
+                    if (terminális != null)
+                    {
+                        return terminális;
+                    }
+                }
+            }
+
+            // Itt hívogatom az alapoperátorokat a szuper operátoron
+            // keresztül. Ha valamelyik alkalmazható, akkor új csúcsot
+            // készítek, és meghívom önmagamat rekurzívan.
+            for (int i = 0; i < aktCsúcs.OperátorokSzáma(); i++)
+            {
+                // Elkészítem az új gyermek csúcsot.
+                // Ez csak akkor lesz kész, ha alkalmazok rá egy alkalmazható operátort is.
+                Csúcs újCsúcs = new Csúcs(aktCsúcs);
+                // Kipróbálom az i.dik alapoperátort. Alkalmazható?
+                if (újCsúcs.SzuperOperátor(i))
+                {
+                    // Ha igen, rekurzívan meghívni önmagam az új csúcsra.
+                    // Ha nem null értéket ad vissza, akkor megvan a megoldás.
+                    // Ha null értéket, akkor ki kell próbálni a következő alapoperátort.
+                    Csúcs terminális = Keresés(újCsúcs, részCélIndexe);
+                    if (terminális != null)
+                    {
+                        // Visszaadom a megoldást képviselő terminális csúcsot.
+                        return terminális;
+                    }
+                    // Az else ágon kellene visszavonni az operátort.
+                    // Erre akkor van szükség, ha az új gyermeket létrehozásában nem lenne klónozást.
+                    // Mivel klónoztam, ezért ez a rész üres.
+                }
+            }
+            // Ha kipróbáltam az összes operátort és egyik se vezetett megoldásra, akkor visszalépés.
+            // A visszalépés hatására eggyel feljebb a következő alapoperátor kerül sorra.
+            return null;
+        }
+    }
+}
