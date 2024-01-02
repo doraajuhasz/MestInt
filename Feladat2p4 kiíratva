@@ -98,8 +98,8 @@ namespace ConsoleApp1
 
                 default: return false;
             }
-                
-            
+
+
         }
 
         public override int TranzakciókSzáma(int részCélIndexe)
@@ -137,7 +137,7 @@ namespace ConsoleApp1
                     switch (i)
                     {
                         case 0:
-                            Console.WriteLine("Belépek T3-ba"); 
+                            Console.WriteLine("Belépek T3-ba");
                             return T3();
                         default: return false;
                     }
@@ -287,7 +287,7 @@ namespace ConsoleApp1
             mentés.tábla = (int[,])tábla.Clone();
             return mentés;
         }
-        public override bool Equals(Object a) 
+        public override bool Equals(Object a)
         {
             if (a == null) return false;
             if (!(a is Feladat2p4)) return false;
@@ -300,7 +300,7 @@ namespace ConsoleApp1
             return tábla.GetHashCode(); // Ha két példány egyenlő, akkor a hasítókódjuk is egyenlő
         }
 
-        
+
         private bool T1()
         {
             return SzuperOperátor(12) &&
@@ -390,8 +390,7 @@ namespace ConsoleApp1
 
             // Ellenőrizzük, hogy az új pozíció a táblán belül van-e. Ha nem, akkor visszatérünk hamis értékkel, mert a lépés nem érvényes.
             if (újX < 0 || újX > 4 || újY < 0 || újY > 3)
-                //Console.WriteLine("A bábu nincs a táblán belül.");
-            return false;
+                return false;
 
             // Ellenőrizzük, hogy az új pozíció üres-e. Ha nem, akkor visszatérünk hamis értékkel, mert a lépés nem érvényes.
             if (tábla[újX, újY] != -1)
@@ -431,7 +430,7 @@ namespace ConsoleApp1
                 {
                     // Ha az adott mezőn ellenséges bábu van, és üti a bábu új pozícióját, akkor a lépés nem érvényes.
                     if (ellenségesBábu(tábla[x, y], bábu) && üti(x, y, újX, újY))
-                            return false;
+                        return false;
                 }
             }
             Console.WriteLine("érvényes feltételek a lépéshez");
@@ -440,14 +439,14 @@ namespace ConsoleApp1
         }
 
         int keresX(int bábu)
-            
-        {            
+
+        {
             for (int x = 0; x < 5; x++)
             {
                 for (int y = 0; y < 4; y++)
                 {
                     if (tábla[x, y] == bábu) return x;
-                    
+
                 }
             }
 
@@ -466,7 +465,7 @@ namespace ConsoleApp1
             return -1; //lehetetlen eset
         }
 
-        
+
         public override bool ÁllapotE()
         {
             for (int x = 0; x < 5; x++)
@@ -518,19 +517,19 @@ namespace ConsoleApp1
 
         public override string ToString()
         {
-        StringBuilder sb = new StringBuilder();
-    
-             for (int x = 0; x < 5; x++)
-             {
+            StringBuilder sb = new StringBuilder();
+
+            for (int x = 0; x < 5; x++)
+            {
                 for (int y = 0; y < 4; y++)
                 {
-                        sb.Append(tábla[x, y]);
-                        sb.Append("\t");
+                    sb.Append(tábla[x, y]);
+                    sb.Append("\t");
                 }
                 sb.AppendLine();
-             }
+            }
 
-             return sb.ToString();
+            return sb.ToString();
         }
 
         string részCélkiír()
